@@ -1,0 +1,33 @@
+.header{
+    margin-top:0;
+    background-color: black;
+    height: 100px;
+    color: white;
+}
+
+.header-title{
+    padding-top: 5px;
+    padding-left: 20px;
+    font-size: 4rem;
+    font-family: 'Cookie';
+}
+
+.header-text{
+    padding-top: 25px;
+    padding-left:50px;
+    font-size: 30px;
+    text-decoration: underline;
+}
+
+.logo img{
+padding-top: 10px;
+padding-left: 20px;
+height: 60px;
+}
+
+.header{
+    /* min-width:100%; */
+    width:100%; 
+
+}
+@import url('https://fonts.googleapis.com/css2?family=Cookie&family=Great+Vibes&display=swap')

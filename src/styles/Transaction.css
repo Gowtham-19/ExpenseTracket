@@ -1,0 +1,86 @@
+.main_header{
+    margin-top: 20px;
+}
+
+.analysis_chart{
+    /* height: 100%; */
+    /* width: 50%; */
+    margin-left: 10%;
+    justify-content: center;
+    align-items: center;
+    /* overflow: 'scroll'; */
+    width:1400px;
+    margin-bottom:40px;
+}
+
+.chart_header{
+    margin-top: 10px;
+    text-decoration: underline;
+    font-family: 'Cookie';
+    font-size: 60px;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    color: darkblue;
+}
+
+.expense_chart{
+    margin-top:0px;
+    /* height: 400px; */
+    /* width:800px; */
+    box-shadow:10px 10px 20px gray;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.add_expense{
+    right: 0;
+    height: 100%;
+    width: 50%;
+    position:fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.add_form{
+    height: 500px;
+    width:600px;
+    box-shadow:10px 10px 20px gray;
+    align-items: center;
+    justify-content: center;
+    /* align-items: center; */
+    font-size: 2rem;
+    /* padding-top:5px; */
+    /* background-color: hsl(356, 60%, 75%); */
+    border:  2px solid black;
+}
+
+
+.add_form_data{
+    margin-left: 25%;
+}
+
+
+.add_title{
+    margin-top: 10px;
+    text-decoration: underline;
+    font-family: 'Cookie';
+    font-size: 60px;
+    margin-bottom: 25px;
+    color: darkblue;
+
+}
+
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+.salary_info{
+    font-size: 30px;
+    text-decoration: underline;
+    color: blue;
+}
+
