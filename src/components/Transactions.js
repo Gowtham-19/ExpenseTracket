@@ -32,8 +32,9 @@ const Transactions = () => {
     const [isOpenDelete, setisOpenDelete] = useState(false);
     //model for update expense
     const [isOpenUpdate, setisOpenUpdate] = useState(false);
-
-    //this data is used for deipay purpose
+    //modal for expense amount validation
+    const [isOpenValidateExpense, setisOpenValidateExpense] = useState(false);
+    //this data is used for display purpose
     const categories = ["Savings", "House Rent", "Grocerys and Food","Electronics" ,"Entertaiment", "EMI'S", "Credit Card Bill's"]
     //this data is used for working on the core logic part
     const category_keys = ["savings", "house_rent", "grocery_food", "electronics", "entertainment", "emis", "credit_card_bills"]
@@ -41,9 +42,11 @@ const Transactions = () => {
     const [display_salary,setDisplaySalary] = useState({salary:0})
     const [expense_type, setExpenseType] = useState('');
     const [amount, setAmount] = useState('');
+    const [balance_salary,setBalanceSalary] = useState('');
     const expense_display_object={"savings":"Savings","house_rent":"House Rent","grocery_food":"Grocerys and Food","electronics":"Electronics","entertainment":"Entertaiment","emis":"EMI'S","credit_card_bills":"Credit Card Bill's"}
     const [series_data, setSeriesData] = useState([{ name: "percentage", data: [13.7, 16.3, 8.3, 3.3, 1.6, 0,0] }])
     let [expense_dropdown, setExpenseDropdown] = useState([{ expense_type: "savings", display_name: "Savings",hidden:false }, {expense_type: "house_rent",display_name:"House Rent",hidden:false}, {expense_type: "grocery_food",display_name:"Grocerys and Food",hidden:false}, {expense_type: "electronics",display_name:"Electronics",hidden:false}, { expense_type: "entertainment",display_name:"Entertaiment",hidden:false}, {expense_type: "emis",display_name:"EMI'S",hidden:false}, {expense_type: "credit_card_bills",display_name:"Credit Card Bill's",hidden:false}])
+
     // buffer data which data which is newly getting added to check whether user is closing form with out submitting his expense data
     function createData(expense_type, amount) {
         let expense_display_name = expense_display_object[expense_type]
@@ -131,11 +134,22 @@ const Transactions = () => {
 
     const deleteExpenseData = () => {
         let data =expense_data;
+        let salary = Number(balance_salary) + Number(expense_data[deleteExpensePos]["amount"]);
+        setBalanceSalary(salary);
+        let expense_type = data[deleteExpensePos]["expense_type"]
         data.splice(deleteExpensePos,1);
         setExpenseData(data);
+        console.log("value of expense type",expense_type)
+        let find_expense_pos = expense_dropdown.findIndex((ele) => ele["expense_type"] === expense_type);
+        console.log('value of expense pos',find_expense_pos);
+        expense_dropdown[find_expense_pos]["hidden"]=false;
+        setExpenseDropdown(expense_dropdown);
         setisOpenDelete(false);
+        let data_buffer = expense_buffer_data;
+        data_buffer.splice(deleteExpensePos,1);
+        setExpenseBuffer(data_buffer);
     }
-    
+
       const expense_caluclate_analysis = () => {
         console.log("value of salary",salary)
         setDisplaySalary({salary})
@@ -149,28 +163,60 @@ const Transactions = () => {
         // }
         // console.log("data of expense caluclation",data)
       }
+
       const expenseTableData = () => {
-        //setting table data
-        setExpenseData(expense_data.concat([createData(expense_type,amount)]))
-        //setting buffer data so that if user closes the form before subbmitting the new transactions data we won't be adding that data for expense computation
-        setExpenseBuffer(expense_buffer_data.concat([createData(expense_type,amount)]))
-        // setExpenseDropdown
-        let data = expense_dropdown;
-        let find_expense_pos = data.findIndex((ele) => ele["expense_type"] === expense_type);
-        data[find_expense_pos]["hidden"]=true;
-        setExpenseDropdown(data);
-        setExpenseType('')
-        setAmount('')
+        //checking if expense amount is less then the balance salary or not
+        if(amount <= balance_salary || !balance_salary){
+            //setting balance salary
+            let balance = balance_salary?(balance_salary-amount):(salary-amount);
+            setBalanceSalary(balance)
+            //setting table data
+            setExpenseData(expense_data.concat([createData(expense_type,amount)]))
+            //setting buffer data so that if user closes the form before subbmitting the new transactions data we won't be adding that data for expense computation
+            setExpenseBuffer(expense_buffer_data.concat([createData(expense_type,amount)]))
+            // setExpenseDropdown
+            let data = expense_dropdown;
+            let find_expense_pos = data.findIndex((ele) => ele["expense_type"] === expense_type);
+            data[find_expense_pos]["hidden"]=true;
+            setExpenseDropdown(data);
+            setExpenseType('')
+            setAmount('')
+        }else{
+            //if above condition fails then it is not an valid expense
+            setisOpenValidateExpense(true)
+        }
       }
       const updateExpenseAmount = () => {
         let data = expense_data;
-        console.log("data of updated expense",updateExpenseData)
-        //here we direclty updating amount at updated expense
-        data[updateExpenseData["expense_pos"]]["amount"] = updateExpenseData["amount"]
-        setExpenseData(expense_data,() => {
-            console.log("data of expesnes",expense_data)
-        })
-        setisOpenUpdate(false)
+        console.log("data of updated expense",updateExpenseData);
+        let difference_in_amount = Number(updateExpenseData["amount"])-Number(data[updateExpenseData["expense_pos"]]["amount"]);
+        console.log("value of differnece",difference_in_amount)
+        let final_amount=0;
+        let update_amount=0;
+        data[updateExpenseData["expense_pos"]]["amount"] = updateExpenseData["amount"];
+        if(difference_in_amount>0){
+            data.forEach(ele => {
+                final_amount+=Number(ele["amount"])
+            })
+            console.log("value of final amount",final_amount)
+            if(final_amount>salary){
+                setisOpenValidateExpense(true)
+            }else{
+                update_amount=balance_salary-difference_in_amount
+                //here we add or subtract the difference amount to our current expense
+                setBalanceSalary(update_amount)
+                //here we direclty updating amount at updated expense
+                setExpenseData(data);
+                setisOpenUpdate(false);
+            }
+        }else{
+            update_amount=balance_salary-difference_in_amount
+            //here we add or subtract the difference amount to our current expense
+            setBalanceSalary(update_amount)
+            //here we direclty updating amount at updated expense
+            setExpenseData(data);
+            setisOpenUpdate(false);
+        }
       }
     return (
         <>
@@ -201,6 +247,7 @@ const Transactions = () => {
                 </ModalHeader>
                 <ModalBody>
                     <Row>
+                        <Col>
                         <Box style={{ paddingTop: "15px" }}
                             component="form"
                             sx={{
@@ -213,6 +260,18 @@ const Transactions = () => {
                                     setSalary(event.target.value)
                                 }} />
                         </Box>
+                        </Col>
+                        <Col>
+                        <Box style={{ paddingTop: "15px" }}
+                            component="form"
+                            sx={{
+                                '& > :not(style)': { m: 1, width: '35ch' },
+                            }}
+                            autoComplete="off"
+                        >
+                            <TextField id="outlined-basic" label="Balance Salary" type='number' variant="outlined" value={balance_salary}
+                                 disabled />
+                        </Box></Col>
                     </Row>
                     <Row md={12}>
                         <Col md={5}>
@@ -245,12 +304,19 @@ const Transactions = () => {
                                 <TextField id="outlined-basic" label="Enter Amount" variant="outlined" value={amount} type='number'
                                     onChange={(event) => {
                                         setAmount(event.target.value)
-                                    }} />
+                                    }} 
+                                    error={balance_salary && amount > balance_salary}
+                                    />
                             </Box>
+                            { balance_salary && (amount > balance_salary)?(
+                                    <span className='text-danger'>Your Expense is exceeding is your balance salary please check</span>
+                                ):(
+                                    <></>
+                                )}
                         </Col>
                         <Col md={2}>
                             <Button endIcon={<AddCircleOutlineSharpIcon />} variant='contained' color="info"
-                            onClick={expenseTableData}>Add Expense</Button>
+                            onClick={expenseTableData} disabled={balance_salary?(amount>balance_salary):(balance_salary===0?true:false)} >Add Expense</Button>
                         </Col>
                     </Row>
                     {expense_data.length > 0 ? (
@@ -286,14 +352,14 @@ const Transactions = () => {
                                                 key={row.expense_type}
                                                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                             >
-                                                <TableCell component="th" scope="row">
+                                                <TableCell component="th" scope="row" style={{fontSize:"20px"}}>
                                                     {row.expense_display_name}
                                                 </TableCell>
-                                                <TableCell>{row.amount}</TableCell>
-                                                <TableCell><EditRoundedIcon style={{ color: "orange",cursor:"pointer" }} onClick={() => {
+                                                <TableCell style={{fontSize:"20px"}}>{Number(row.amount).toLocaleString()}</TableCell>
+                                                <TableCell style={{fontSize:"20px"}}><EditRoundedIcon style={{ color: "orange",cursor:"pointer" }} onClick={() => {
                                                     updateExpense(index,row.expense_display_name, row.amount)
                                                 }} /></TableCell>
-                                                <TableCell><DeleteIcon style={{ color: "red",cursor:"pointer" }}
+                                                <TableCell style={{fontSize:"20px"}}><DeleteIcon style={{ color: "red",cursor:"pointer" }}
                                                     onClick={() => {
                                                         setisOpenDelete(true);
                                                         setDeleteExpensePos(index);
@@ -353,6 +419,25 @@ const Transactions = () => {
                     </Row>
                 </ModalFooter>
             </Modal>
+            <Modal isOpen={isOpenValidateExpense} backdrop="static" size="md" scrollable={true}>
+                <ModalHeader>
+                    <span style={{"color":"red"}}>Invalid Expense!</span>
+                </ModalHeader>
+                <ModalBody>
+                    <div style={{ fontSize: "20px" }}>Your Expense is exceeding your salary balance please check your expense amount</div>
+                </ModalBody>
+                <ModalFooter>
+                    <Row>
+                        <Col>
+                            <Button endIcon={<CancelRoundedIcon />} variant="contained" color="error" onClick={() => {
+                                setisOpenValidateExpense(false)
+                            }}>
+                                Close
+                            </Button>
+                        </Col>
+                    </Row>
+                </ModalFooter>
+            </Modal>
             <Modal isOpen={isOpenUpdate} backdrop="static" size="lg" scrollable={true}>
                 <ModalHeader>
                     <span>Update Expense</span>
@@ -382,8 +467,16 @@ const Transactions = () => {
                                 <TextField id="outlined-basic" label="Enter Amount" variant="outlined" value={updateExpenseData['amount']} type='number'
                                     onChange={(event) => {
                                         setUpdateExpenseData({ expense_pos:updateExpenseData["expense_pos"],expense_type: updateExpenseData['expense_type'], amount: event.target.value })
-                                    }} />
+                                    }} 
+                                    error={updateExpenseData["amount"]> balance_salary}
+                                    />
+
                             </Box>
+                                {updateExpenseData["amount"]> balance_salary?(
+                                    <span className='text-danger'>Your Expense is exceeding is your balance salary please check</span>
+                                ):(
+                                    <></>
+                                )}
                         </Col>
                     </Row>
                 </ModalBody>
@@ -397,7 +490,10 @@ const Transactions = () => {
                             </Button>
                         </Col>
                         <Col>
-                            <Button endIcon={<CheckIcon />} variant="contained" color="success" onClick={updateExpenseAmount}>
+                            {/* here we are checking following cases
+                            case1:user increased his expense then we need to check whether this increased
+                             */}
+                            <Button endIcon={<CheckIcon />} variant="contained" color="success" onClick={updateExpenseAmount} disabled={updateExpenseData['amount']>balance_salary}>
                                 Confirm
                             </Button>
                         </Col>
