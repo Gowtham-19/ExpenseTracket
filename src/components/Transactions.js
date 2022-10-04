@@ -44,7 +44,7 @@ const Transactions = () => {
     const [amount, setAmount] = useState('');
     const [balance_salary, setBalanceSalary] = useState('');
     const expense_display_object = { "savings": "Savings", "house_rent": "House Rent", "grocery_food": "Grocerys and Food", "electronics": "Electronics", "entertainment": "Entertaiment", "emis": "EMI'S", "credit_card_bills": "Credit Card Bill's" }
-    const [series_data, setSeriesData] = useState([{ name: "percentage", data: [13.7, 16.3, 8.3, 3.3, 1.6, 0, 0] }])
+    const [series_data, setSeriesData] = useState([{ name: "percentage", data: [0, 0, 0, 0, 0, 0, 0] }])
     let [expense_dropdown, setExpenseDropdown] = useState([{ expense_type: "savings", display_name: "Savings", hidden: false }, { expense_type: "house_rent", display_name: "House Rent", hidden: false }, { expense_type: "grocery_food", display_name: "Grocerys and Food", hidden: false }, { expense_type: "electronics", display_name: "Electronics", hidden: false }, { expense_type: "entertainment", display_name: "Entertaiment", hidden: false }, { expense_type: "emis", display_name: "EMI'S", hidden: false }, { expense_type: "credit_card_bills", display_name: "Credit Card Bill's", hidden: false }])
 
     // buffer data which data which is newly getting added to check whether user is closing form with out submitting his expense data
@@ -58,7 +58,8 @@ const Transactions = () => {
     const [updateExpenseData, setUpdateExpenseData] = useStateWithCallbackLazy({
         expense_pos: -1,
         expense_type: "",
-        amount: 0
+        amount: 0,
+        amount_before_update:0,
     })
 
     const [deleteExpensePos, setDeleteExpensePos] = useState(-1)
@@ -126,7 +127,9 @@ const Transactions = () => {
 
     const updateExpense = (pos, expense_type, expense_amount) => {
         console.log("value of pos", pos)
-        setUpdateExpenseData({ expense_pos: pos, expense_type: expense_type, amount: expense_amount }, () => {
+        console.log("data of expenses",expense_data)
+        //storing expense amount with before is for validating new expense value
+        setUpdateExpenseData({ expense_pos: pos, expense_type: expense_type, amount: expense_amount,amount_before_update:expense_amount }, () => {
             console.log("data of update expense", updateExpenseData)
             setisOpenUpdate(true)
         })
@@ -153,10 +156,21 @@ const Transactions = () => {
     const expense_caluclate_analysis = () => {
         console.log("value of salary", salary)
         setDisplaySalary({ salary })
+        let salary_amount = Number(salary)
+        let expense_graph_keys = category_keys;
+        let series_graph_data = [0,0,0,0,0,0,0];
+        let expense_compute_data = expense_data;
+        expense_compute_data.forEach(ele => {
+            let percentage_spent_income = Number(((Number(ele["amount"])/salary_amount)*100).toFixed(2))
+            let find_category = expense_graph_keys.indexOf(ele["expense_type"]);
+            if(find_category !== -1){
+                series_graph_data[find_category]=percentage_spent_income;
+            }
+        })
+        setSeriesData([{ name: "percentage", data: series_graph_data }])
+        console.log("data of expense data",expense_data)
+        console.log("data of series graph data",series_graph_data)
         setisOpen(false)
-        console.log("value of expense", expense_type)
-        console.log("value of amount", amount)
-        console.log("value of caluclation", salary % amount)
         // let find_expense = data.findIndex(ele => ele["org_name"] == expense_type)
         // if(find_expense != -1){
         //     data[find_expense]["percentage"] = Number(((amount/salary)*100).toFixed(0));
@@ -165,10 +179,8 @@ const Transactions = () => {
     }
 
     const expenseTableData = () => {
-        //checking if expense amount is less then the balance salary or not
-        if (amount <= balance_salary || !balance_salary) {
             //setting balance salary
-            let balance = balance_salary ? (balance_salary - amount) : (salary - amount);
+            let balance = balance_salary ? (Number(balance_salary) - amount) : (salary - amount);
             setBalanceSalary(balance)
             //setting table data
             setExpenseData(expense_data.concat([createData(expense_type, amount)]))
@@ -181,10 +193,6 @@ const Transactions = () => {
             setExpenseDropdown(data);
             setExpenseType('')
             setAmount('')
-        } else {
-            //if above condition fails then it is not an valid expense
-            setisOpenValidateExpense(true)
-        }
     }
     const updateExpenseAmount = () => {
         let data = expense_data;
@@ -202,7 +210,7 @@ const Transactions = () => {
             if (final_amount > salary) {
                 setisOpenValidateExpense(true)
             } else {
-                update_amount = balance_salary - difference_in_amount
+                update_amount = Number(balance_salary) - difference_in_amount
                 //here we add or subtract the difference amount to our current expense
                 setBalanceSalary(update_amount)
                 //here we direclty updating amount at updated expense
@@ -210,7 +218,7 @@ const Transactions = () => {
                 setisOpenUpdate(false);
             }
         } else {
-            update_amount = balance_salary - difference_in_amount
+            update_amount = Number(balance_salary) - difference_in_amount
             //here we add or subtract the difference amount to our current expense
             setBalanceSalary(update_amount)
             //here we direclty updating amount at updated expense
@@ -305,18 +313,18 @@ const Transactions = () => {
                                     onChange={(event) => {
                                         setAmount(event.target.value)
                                     }}
-                                    error={balance_salary && amount > balance_salary}
+                                    error={expense_data.length>0?Number(amount) > Number(balance_salary):(Number(amount)>salary?true:false)}
                                 />
                             </Box>
-                            {balance_salary && (amount > balance_salary) ? (
-                                <span className='text-danger'>Your Expense is exceeding is your balance salary please check</span>
-                            ) : (
-                                <></>
-                            )}
+                            {expense_data.length>0?(Number(amount) > Number(balance_salary)?(
+                                 <span className='text-danger'>Your Expense is exceeding is your balance salary please check</span>
+                            ):(<></>)):(Number(amount)>salary?(
+                               <span className='text-danger'>Your Expense is exceeding is your balance salary please check</span>
+                            ):(<></>))}
                         </Col>
                         <Col md={2}>
                             <Button endIcon={<AddCircleOutlineSharpIcon />} variant='contained' color="info"
-                                onClick={expenseTableData} disabled={balance_salary ? (amount > balance_salary) : (balance_salary === 0 ? true : false)} >Add Expense</Button>
+                                onClick={expenseTableData} disabled={expense_data.length>0?(Number(amount) > Number(balance_salary) || Number(balance_salary) === 0):(Number(amount)>salary?true:false)} >Add Expense</Button>
                         </Col>
                     </Row>
                     {expense_data.length > 0 ? (
@@ -466,13 +474,14 @@ const Transactions = () => {
                             >
                                 <TextField id="outlined-basic" label="Enter Amount" variant="outlined" value={updateExpenseData['amount']} type='number'
                                     onChange={(event) => {
-                                        setUpdateExpenseData({ expense_pos: updateExpenseData["expense_pos"], expense_type: updateExpenseData['expense_type'], amount: event.target.value })
+                                        setUpdateExpenseData({ expense_pos: updateExpenseData["expense_pos"], expense_type: updateExpenseData['expense_type'], amount: event.target.value,amount_before_update:updateExpenseData['amount_before_update'] })
                                     }}
-                                    error={updateExpenseData["amount"] > balance_salary}
+                                    error={
+                                       ((Number(updateExpenseData['amount'])-Number(updateExpenseData['amount_before_update']))>Number(balance_salary))
+                                    }
                                 />
-
                             </Box>
-                            {updateExpenseData["amount"] > balance_salary ? (
+                            {(Number(updateExpenseData['amount'])-Number(updateExpenseData['amount_before_update']))>Number(balance_salary) ? (
                                 <span className='text-danger'>Your Expense is exceeding is your balance salary please check</span>
                             ) : (
                                 <></>
@@ -493,7 +502,7 @@ const Transactions = () => {
                             {/* here we are checking following cases
                             case1:user increased his expense then we need to check whether this increased
                              */}
-                            <Button endIcon={<CheckIcon />} variant="contained" color="success" onClick={updateExpenseAmount} disabled={updateExpenseData['amount'] > balance_salary}>
+                            <Button endIcon={<CheckIcon />} variant="contained" color="success" onClick={updateExpenseAmount} disabled={ ((Number(updateExpenseData['amount'])-Number(updateExpenseData['amount_before_update']))>Number(balance_salary))}>
                                 Confirm
                             </Button>
                         </Col>
