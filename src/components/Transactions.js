@@ -25,7 +25,13 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import CheckIcon from '@mui/icons-material/Check';
 import { useStateWithCallbackLazy } from 'use-state-with-callback';
+import HistoryTables from './HistoryTables';
+import DatePicker from "react-datepicker";
+
 const Transactions = () => {
+    const [filterdate, setFilterDate] = useStateWithCallbackLazy(new Date());
+    const max_date = new Date()
+    const min_date = new Date().setFullYear(max_date.getFullYear() - 3)
     // model for add expense
     const [isOpen, setisOpen] = useState(false);
     //modal for delete expense
@@ -35,7 +41,7 @@ const Transactions = () => {
     //modal for expense amount validation
     const [isOpenValidateExpense, setisOpenValidateExpense] = useState(false);
     //this data is used for display purpose
-    const categories = ["Savings", "House Rent", "Grocerys and Food", "Electronics", "Entertaiment", "EMI'S", "Credit Card Bill's"]
+    const categories = ["Savings", "House Rent", "Grocerys and Food", "Electronics", "Entertaiment", "EMI'S", "Others"]
     //this data is used for working on the core logic part
     const category_keys = ["savings", "house_rent", "grocery_food", "electronics", "entertainment", "emis", "credit_card_bills"]
     const [salary, setSalary] = useState('')
@@ -43,9 +49,11 @@ const Transactions = () => {
     const [expense_type, setExpenseType] = useState('');
     const [amount, setAmount] = useState('');
     const [balance_salary, setBalanceSalary] = useState('');
-    const expense_display_object = { "savings": "Savings", "house_rent": "House Rent", "grocery_food": "Grocerys and Food", "electronics": "Electronics", "entertainment": "Entertaiment", "emis": "EMI'S", "credit_card_bills": "Credit Card Bill's" }
-    const [series_data, setSeriesData] = useState([{ name: "percentage", data: [0, 0, 0, 0, 0, 0, 0] }])
-    let [expense_dropdown, setExpenseDropdown] = useState([{ expense_type: "savings", display_name: "Savings", hidden: false }, { expense_type: "house_rent", display_name: "House Rent", hidden: false }, { expense_type: "grocery_food", display_name: "Grocerys and Food", hidden: false }, { expense_type: "electronics", display_name: "Electronics", hidden: false }, { expense_type: "entertainment", display_name: "Entertaiment", hidden: false }, { expense_type: "emis", display_name: "EMI'S", hidden: false }, { expense_type: "credit_card_bills", display_name: "Credit Card Bill's", hidden: false }])
+    const [expense_salary_tracker,setExpenseSalaryTracker] = useState({
+        "savings":0,"house_rent":0,"grocery_food":0,"electronics":0,"entertainment":0,"emis":0,"credit_card_bills":0,"total_expenses":0 })
+    const expense_display_object = { "savings": "Savings", "house_rent": "House Rent", "grocery_food": "Grocerys and Food", "electronics": "Electronics", "entertainment": "Entertaiment", "emis": "EMI'S", "credit_card_bills": "Others" }
+    const [series_data, setSeriesData] = useState([{ name: "Amount", data: [0, 0, 0, 0, 0, 0, 0] }])
+    let [expense_dropdown, setExpenseDropdown] = useState([{ expense_type: "savings", display_name: "Savings", hidden: false }, { expense_type: "house_rent", display_name: "House Rent", hidden: false }, { expense_type: "grocery_food", display_name: "Grocerys and Food", hidden: false }, { expense_type: "electronics", display_name: "Electronics", hidden: false }, { expense_type: "entertainment", display_name: "Entertaiment", hidden: false }, { expense_type: "emis", display_name: "EMI'S", hidden: false }, { expense_type: "credit_card_bills", display_name: "Others", hidden: false }])
 
     // buffer data which data which is newly getting added to check whether user is closing form with out submitting his expense data
     function createData(expense_type, amount) {
@@ -62,19 +70,33 @@ const Transactions = () => {
         amount_before_update:0,
     })
 
-    const [deleteExpensePos, setDeleteExpensePos] = useState(-1)
+    const [deleteExpensePos, setDeleteExpensePos] = useState(-1);
+
+    const displayExpenseAmount = (index) => {
+        let expense_view = category_keys[index]
+        // console.log("position of data",index)
+        // console.log("value of epxense type",expense_view)
+        return expense_salary_tracker[expense_view].toLocaleString()
+    }
     const chart_options = {
         chart: {
             id: "basic-bar"
         },
         xaxis: {
             categories: categories,
-            position: "top",
+            position: "bottom",
+            title:{
+                text:"Expenses",
+                style:{
+                    position:"top",
+                    fontSize: '20px'
+                }
+            },
             labels: {
                 style: {
                     fontSize: '15px'
                 }
-            }
+            },
         },
         legend: {
             show: true,
@@ -84,6 +106,13 @@ const Transactions = () => {
             min: 0,
             max: 100,
             tickAmount: 4,
+            title:{
+                text:"Percentages",
+                position:"top",
+                style:{
+                    fontSize:"20px"
+                }
+            },
         },
         colors: ["#000", "#6acc90", "#9da7d4", "#c27959", "#ffa500", "#800080", "#cc0066"],
         plotOptions: {
@@ -108,7 +137,13 @@ const Transactions = () => {
             }
         },
         tooltip: {
-            enabled: false
+            enabled: true,
+            custom: function({series, seriesIndex, dataPointIndex, w}) {
+                return '<div className="tooltip_graph">' +
+                  ' Amount:'
+                  + displayExpenseAmount(dataPointIndex)  +
+                  '</div>'
+              }
         },
         hover: {
             filter: {
@@ -126,25 +161,28 @@ const Transactions = () => {
     }
 
     const updateExpense = (pos, expense_type, expense_amount) => {
-        console.log("value of pos", pos)
-        console.log("data of expenses",expense_data)
+        // console.log("value of pos", pos)
+        // console.log("data of expenses",expense_data)
         //storing expense amount with before is for validating new expense value
         setUpdateExpenseData({ expense_pos: pos, expense_type: expense_type, amount: expense_amount,amount_before_update:expense_amount }, () => {
-            console.log("data of update expense", updateExpenseData)
+            // console.log("data of update expense", updateExpenseData)
             setisOpenUpdate(true)
         })
     }
 
     const deleteExpenseData = () => {
+        let expense_tracker_obj = expense_salary_tracker;
         let data = expense_data;
         let salary = Number(balance_salary) + Number(expense_data[deleteExpensePos]["amount"]);
         setBalanceSalary(salary);
         let expense_type = data[deleteExpensePos]["expense_type"]
         data.splice(deleteExpensePos, 1);
+        expense_tracker_obj[expense_type] = 0;
+        setExpenseSalaryTracker(expense_tracker_obj);
         setExpenseData(data);
-        console.log("value of expense type", expense_type)
+        // console.log("value of expense type", expense_type)
         let find_expense_pos = expense_dropdown.findIndex((ele) => ele["expense_type"] === expense_type);
-        console.log('value of expense pos', find_expense_pos);
+        // console.log('value of expense pos', find_expense_pos);
         expense_dropdown[find_expense_pos]["hidden"] = false;
         setExpenseDropdown(expense_dropdown);
         setisOpenDelete(false);
@@ -154,22 +192,31 @@ const Transactions = () => {
     }
 
     const expense_caluclate_analysis = () => {
-        console.log("value of salary", salary)
+        // console.log("value of salary", salary)
         setDisplaySalary({ salary })
         let salary_amount = Number(salary)
         let expense_graph_keys = category_keys;
         let series_graph_data = [0,0,0,0,0,0,0];
         let expense_compute_data = expense_data;
+        let expense_tracker_obj = expense_salary_tracker;
+        let total_expenses=0;
         expense_compute_data.forEach(ele => {
-            let percentage_spent_income = Number(((Number(ele["amount"])/salary_amount)*100).toFixed(2))
+            let percentage_spent_income = Number(((Number(ele["amount"])/salary_amount)*100).toFixed(0))
             let find_category = expense_graph_keys.indexOf(ele["expense_type"]);
+            // console.log("value of find expense category",find_category)
+            if(ele["expense_type"] !== "savings"){
+                total_expenses+=Number(ele["amount"])
+            }
+            expense_tracker_obj[ele["expense_type"]] = Number(ele["amount"]);
             if(find_category !== -1){
                 series_graph_data[find_category]=percentage_spent_income;
             }
         })
-        setSeriesData([{ name: "percentage", data: series_graph_data }])
-        console.log("data of expense data",expense_data)
-        console.log("data of series graph data",series_graph_data)
+        expense_tracker_obj["total_expenses"] = total_expenses;
+        setSeriesData([{ name: "Amount", data: series_graph_data }])
+        setExpenseSalaryTracker(expense_tracker_obj)
+        // console.log("data of expense data",expense_data)
+        // console.log("data of series graph data",series_graph_data)
         setisOpen(false)
         // let find_expense = data.findIndex(ele => ele["org_name"] == expense_type)
         // if(find_expense != -1){
@@ -183,9 +230,12 @@ const Transactions = () => {
             let balance = balance_salary ? (Number(balance_salary) - amount) : (salary - amount);
             setBalanceSalary(balance)
             //setting table data
-            setExpenseData(expense_data.concat([createData(expense_type, amount)]))
+            let expense = expense_data
+            let expense_data_obj = createData(expense_type, amount)
+            expense.push(expense_data_obj)
+            setExpenseData(expense)
             //setting buffer data so that if user closes the form before subbmitting the new transactions data we won't be adding that data for expense computation
-            setExpenseBuffer(expense_buffer_data.concat([createData(expense_type, amount)]))
+            setExpenseBuffer(expense)
             // setExpenseDropdown
             let data = expense_dropdown;
             let find_expense_pos = data.findIndex((ele) => ele["expense_type"] === expense_type);
@@ -196,9 +246,10 @@ const Transactions = () => {
     }
     const updateExpenseAmount = () => {
         let data = expense_data;
-        console.log("data of updated expense", updateExpenseData);
+        let expense_tracker_obj = expense_salary_tracker;
+        // console.log("data of updated expense", updateExpenseData);
         let difference_in_amount = Number(updateExpenseData["amount"]) - Number(data[updateExpenseData["expense_pos"]]["amount"]);
-        console.log("value of differnece", difference_in_amount)
+        // console.log("value of differnece", difference_in_amount)
         let final_amount = 0;
         let update_amount = 0;
         data[updateExpenseData["expense_pos"]]["amount"] = updateExpenseData["amount"];
@@ -206,7 +257,7 @@ const Transactions = () => {
             data.forEach(ele => {
                 final_amount += Number(ele["amount"])
             })
-            console.log("value of final amount", final_amount)
+            // console.log("value of final amount", final_amount)
             if (final_amount > salary) {
                 setisOpenValidateExpense(true)
             } else {
@@ -225,6 +276,13 @@ const Transactions = () => {
             setExpenseData(data);
             setisOpenUpdate(false);
         }
+        expense_tracker_obj[updateExpenseData["expense_type"]] = Number(updateExpenseData["amount"])
+        setExpenseSalaryTracker(expense_tracker_obj)
+    }
+
+    const setFilter = (date) => {
+        console.log("value of date",date)
+        setFilterDate(date);
     }
     return (
         <>
@@ -232,7 +290,40 @@ const Transactions = () => {
                 <div className='analysis_chart'>
                     <div className='expense_chart'>
                         <p className='chart_header'>Overall Expense Analysis</p>
-                        {display_salary['salary'] > 0 ? <p className='salary_info'>Salary :{display_salary['salary']}</p> : ''}
+                        {/* {display_salary['salary'] > 0 ? <p className='salary_info'>Salary :{display_salary['salary']}</p> : ''} */}
+                            <div className='headers_content'>
+                                <div className='display_headers' style={{backgroundColor:"blue"}}>
+                                    <span>Salary</span>
+                                    { salary && salary>0 ? (
+                                      <span>{Number(salary).toLocaleString()}</span>  
+                                    ):(
+                                        <></>
+                                    )}
+                                </div>
+                                <div className='display_headers' style={{backgroundColor:"purple"}}>
+                                    <span>Balance Salary</span>
+                                    { balance_salary && balance_salary>0 ? (
+                                      <span>{Number(balance_salary).toLocaleString()}</span>  
+                                    ):(
+                                        <></>
+                                    )}
+                                </div>
+                                <div className='display_headers'style={{backgroundColor:"red"}}>
+                                    <span>Expenses</span> 
+                                    { expense_salary_tracker['total_expenses']>0?(
+                                        <span>{expense_salary_tracker['total_expenses'].toLocaleString()}</span>
+                                    ):(<></>) }
+                                </div>
+                                <div className='display_headers' style={{backgroundColor:"green"}}>
+                                    <span>Savings</span>
+                                    { expense_salary_tracker['savings']>0?(
+                                        <span>{expense_salary_tracker['savings'].toLocaleString()}</span>
+                                    ):(<></>) }
+                                </div>
+                            </div>
+                        <div className='bar-chart-btn'>
+                       
+                        </div>
                         <Chart
                             options={chart_options}
                             series={series_data}
@@ -242,7 +333,9 @@ const Transactions = () => {
                         <Button variant="contained" style={{ marginBottom: "15px" }}
                             onClick={() => {
                                 setisOpen(true)
-                            }}>Add Expense Data</Button>
+                            }}>
+                                {expense_data && expense_data.length>0?'Update Expense Data':'Add Expense Data'}
+                                </Button>
                         {/* <Button color="success" onClick={() => addData(series_data)}>Add data</Button> */}
                     </div>
                 </div>
@@ -509,6 +602,24 @@ const Transactions = () => {
                     </Row>
                 </ModalFooter>
             </Modal>
+            {/* future implementation */}
+            {/* <div className='history_filter'>
+                <div className='date_filter'>
+                <label></label>
+                <label style={{marginBottom:"10px"}}><b>Choose Month</b></label>
+                    <DatePicker
+                    
+                    className='form-control'
+                    showMonthYearPicker
+                    selected={filterdate}
+                    onChange={(date) => setFilter(date)}
+                    minDate={min_date}
+                    maxDate={max_date}
+                    dateFormat="MMMM-yyyy"
+                    />
+                    </div>
+            </div> */}
+            {/* <HistoryTables /> */}
         </>
     );
 };

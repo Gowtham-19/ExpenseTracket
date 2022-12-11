@@ -57,6 +57,7 @@
 }
 
 
+
 .add_form_data{
     margin-left: 25%;
 }
@@ -84,3 +85,66 @@ input[type=number]::-webkit-outer-spin-button {
     color: blue;
 }
 
+.bar-chart-btn{
+    display: flex;
+    flex-direction: row;
+}
+
+
+.bar_icon:hover{
+    background-color: purple;
+    color: white;
+    border-radius: 20px;
+    box-shadow:10px 10px 20px gray;
+}
+
+.table_icon:hover{
+    background-color: green;
+    color: white;
+    border-radius: 20px;
+    box-shadow:10px 10px 20px gray;
+}
+
+.headers_content{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.display_headers{
+    box-shadow:10px 10px 20px gray;
+    align-items: center;
+    justify-content: center;
+    margin: 50px;
+    width: 220px;
+    height: 100px;
+    border-radius: 50px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    padding-top: 10px;
+    /* background-color: skyblue; */
+    flex-direction: column;
+    color: white;
+    font-family: 'Cookie';
+}
+
+.display_headers span{
+    font-size: 30px;
+    margin-bottom: 0px;
+}
+
+.tooltip_graph{
+    font-size: 35px;
+}
+
+.history_filter{
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.date_filter{
+    width: 200px;
+}

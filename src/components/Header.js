@@ -8,7 +8,6 @@ const Header = () => {
     <span className="logo">
         <img src={logo_icon} alt="NoImage"/>
     </span>
-      {/* title part */}
        <span className="header-title">Expense Tracker</span>
        <span className="header-text">Helps you in analyzing your expenses in most effective way</span>
     </div>
