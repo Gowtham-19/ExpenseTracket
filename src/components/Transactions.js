@@ -25,13 +25,9 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import CheckIcon from '@mui/icons-material/Check';
 import { useStateWithCallbackLazy } from 'use-state-with-callback';
-import HistoryTables from './HistoryTables';
-import DatePicker from "react-datepicker";
 
 const Transactions = () => {
     const [filterdate, setFilterDate] = useStateWithCallbackLazy(new Date());
-    const max_date = new Date()
-    const min_date = new Date().setFullYear(max_date.getFullYear() - 3)
     // model for add expense
     const [isOpen, setisOpen] = useState(false);
     //modal for delete expense
@@ -55,7 +51,7 @@ const Transactions = () => {
     const [series_data, setSeriesData] = useState([{ name: "Amount", data: [0, 0, 0, 0, 0, 0, 0] }])
     let [expense_dropdown, setExpenseDropdown] = useState([{ expense_type: "savings", display_name: "Savings", hidden: false }, { expense_type: "house_rent", display_name: "House Rent", hidden: false }, { expense_type: "grocery_food", display_name: "Grocerys and Food", hidden: false }, { expense_type: "electronics", display_name: "Electronics", hidden: false }, { expense_type: "entertainment", display_name: "Entertaiment", hidden: false }, { expense_type: "emis", display_name: "EMI'S", hidden: false }, { expense_type: "credit_card_bills", display_name: "Others", hidden: false }])
 
-    // buffer data which data which is newly getting added to check whether user is closing form with out submitting his expense data
+    // buffer data which data which is newly getting added to check whether user is closing form with out submitting user expense data
     function createData(expense_type, amount) {
         let expense_display_name = expense_display_object[expense_type]
         return { expense_display_name, expense_type, amount };
@@ -72,12 +68,12 @@ const Transactions = () => {
 
     const [deleteExpensePos, setDeleteExpensePos] = useState(-1);
 
+    // this function is used for converting amount to display format
     const displayExpenseAmount = (index) => {
         let expense_view = category_keys[index]
-        // console.log("position of data",index)
-        // console.log("value of epxense type",expense_view)
         return expense_salary_tracker[expense_view].toLocaleString()
     }
+
     const chart_options = {
         chart: {
             id: "basic-bar"
@@ -160,16 +156,15 @@ const Transactions = () => {
         }
     }
 
+    // this function is used for binding data to update expense form
     const updateExpense = (pos, expense_type, expense_amount) => {
-        // console.log("value of pos", pos)
-        // console.log("data of expenses",expense_data)
         //storing expense amount with before is for validating new expense value
         setUpdateExpenseData({ expense_pos: pos, expense_type: expense_type, amount: expense_amount,amount_before_update:expense_amount }, () => {
-            // console.log("data of update expense", updateExpenseData)
             setisOpenUpdate(true)
         })
     }
 
+    // this function is used for deleting expense record
     const deleteExpenseData = () => {
         let expense_tracker_obj = expense_salary_tracker;
         let data = expense_data;
@@ -180,9 +175,7 @@ const Transactions = () => {
         expense_tracker_obj[expense_type] = 0;
         setExpenseSalaryTracker(expense_tracker_obj);
         setExpenseData(data);
-        // console.log("value of expense type", expense_type)
         let find_expense_pos = expense_dropdown.findIndex((ele) => ele["expense_type"] === expense_type);
-        // console.log('value of expense pos', find_expense_pos);
         expense_dropdown[find_expense_pos]["hidden"] = false;
         setExpenseDropdown(expense_dropdown);
         setisOpenDelete(false);
@@ -191,8 +184,8 @@ const Transactions = () => {
         setExpenseBuffer(data_buffer);
     }
 
+    // this function is used for perofming expense chart analysis data
     const expense_caluclate_analysis = () => {
-        // console.log("value of salary", salary)
         setDisplaySalary({ salary })
         let salary_amount = Number(salary)
         let expense_graph_keys = category_keys;
@@ -203,7 +196,6 @@ const Transactions = () => {
         expense_compute_data.forEach(ele => {
             let percentage_spent_income = Number(((Number(ele["amount"])/salary_amount)*100).toFixed(0))
             let find_category = expense_graph_keys.indexOf(ele["expense_type"]);
-            // console.log("value of find expense category",find_category)
             if(ele["expense_type"] !== "savings"){
                 total_expenses+=Number(ele["amount"])
             }
@@ -215,16 +207,10 @@ const Transactions = () => {
         expense_tracker_obj["total_expenses"] = total_expenses;
         setSeriesData([{ name: "Amount", data: series_graph_data }])
         setExpenseSalaryTracker(expense_tracker_obj)
-        // console.log("data of expense data",expense_data)
-        // console.log("data of series graph data",series_graph_data)
         setisOpen(false)
-        // let find_expense = data.findIndex(ele => ele["org_name"] == expense_type)
-        // if(find_expense != -1){
-        //     data[find_expense]["percentage"] = Number(((amount/salary)*100).toFixed(0));
-        // }
-        // console.log("data of expense caluclation",data)
     }
 
+    // this function is used for forming expense table data
     const expenseTableData = () => {
             //setting balance salary
             let balance = balance_salary ? (Number(balance_salary) - amount) : (salary - amount);
@@ -244,12 +230,12 @@ const Transactions = () => {
             setExpenseType('')
             setAmount('')
     }
+
+    // this function is used for updating expense amount
     const updateExpenseAmount = () => {
         let data = expense_data;
         let expense_tracker_obj = expense_salary_tracker;
-        // console.log("data of updated expense", updateExpenseData);
         let difference_in_amount = Number(updateExpenseData["amount"]) - Number(data[updateExpenseData["expense_pos"]]["amount"]);
-        // console.log("value of differnece", difference_in_amount)
         let final_amount = 0;
         let update_amount = 0;
         data[updateExpenseData["expense_pos"]]["amount"] = updateExpenseData["amount"];
@@ -257,7 +243,6 @@ const Transactions = () => {
             data.forEach(ele => {
                 final_amount += Number(ele["amount"])
             })
-            // console.log("value of final amount", final_amount)
             if (final_amount > salary) {
                 setisOpenValidateExpense(true)
             } else {
@@ -280,17 +265,14 @@ const Transactions = () => {
         setExpenseSalaryTracker(expense_tracker_obj)
     }
 
-    const setFilter = (date) => {
-        console.log("value of date",date)
-        setFilterDate(date);
-    }
+   
     return (
         <>
             <div className='main_header'>
                 <div className='analysis_chart'>
                     <div className='expense_chart'>
                         <p className='chart_header'>Overall Expense Analysis</p>
-                        {/* {display_salary['salary'] > 0 ? <p className='salary_info'>Salary :{display_salary['salary']}</p> : ''} */}
+                     
                             <div className='headers_content'>
                                 <div className='display_headers' style={{backgroundColor:"blue"}}>
                                     <span>Salary</span>
@@ -321,9 +303,6 @@ const Transactions = () => {
                                     ):(<></>) }
                                 </div>
                             </div>
-                        <div className='bar-chart-btn'>
-                       
-                        </div>
                         <Chart
                             options={chart_options}
                             series={series_data}
@@ -340,6 +319,7 @@ const Transactions = () => {
                     </div>
                 </div>
             </div>
+            {/* Modal for adding expense amount data */}
             <Modal isOpen={isOpen} backdrop="static" size="xl" scrollable={true}>
                 <ModalHeader toggle={() => {
                     setisOpen(false)
@@ -495,6 +475,7 @@ const Transactions = () => {
                     </Row>
                 </ModalFooter>
             </Modal>
+            {/* Modal for deleting expense record */}
             <Modal isOpen={isOpenDelete} backdrop="static" size="md" scrollable={true}>
                 <ModalHeader>
                     <span>Delete Expense</span>
@@ -520,6 +501,7 @@ const Transactions = () => {
                     </Row>
                 </ModalFooter>
             </Modal>
+            {/* Modal for validating expense amount */}
             <Modal isOpen={isOpenValidateExpense} backdrop="static" size="md" scrollable={true}>
                 <ModalHeader>
                     <span style={{ "color": "red" }}>Invalid Expense!</span>
@@ -539,6 +521,7 @@ const Transactions = () => {
                     </Row>
                 </ModalFooter>
             </Modal>
+            {/* Modal for updating Expense Amount */}
             <Modal isOpen={isOpenUpdate} backdrop="static" size="lg" scrollable={true}>
                 <ModalHeader>
                     <span>Update Expense</span>
