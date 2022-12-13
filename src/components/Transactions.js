@@ -76,7 +76,8 @@ const Transactions = () => {
 
     const chart_options = {
         chart: {
-            id: "basic-bar"
+            id: "basic-bar",
+            width:"1600px"
         },
         xaxis: {
             categories: categories,
@@ -274,7 +275,7 @@ const Transactions = () => {
                         <p className='chart_header'>Overall Expense Analysis</p>
                      
                             <div className='headers_content'>
-                                <div className='display_headers' style={{backgroundColor:"blue"}}>
+                                <div className='display_headers' style={{backgroundColor:"#b3b3e1"}}>
                                     <span>Salary</span>
                                     { salary && salary>0 ? (
                                       <span>{Number(salary).toLocaleString()}</span>  
@@ -282,7 +283,7 @@ const Transactions = () => {
                                         <></>
                                     )}
                                 </div>
-                                <div className='display_headers' style={{backgroundColor:"purple"}}>
+                                <div className='display_headers' style={{backgroundColor:"#eb4ceb"}}>
                                     <span>Balance Salary</span>
                                     { balance_salary && balance_salary>0 ? (
                                       <span>{Number(balance_salary).toLocaleString()}</span>  
@@ -290,25 +291,29 @@ const Transactions = () => {
                                         <></>
                                     )}
                                 </div>
-                                <div className='display_headers'style={{backgroundColor:"red"}}>
+                                <div className='display_headers'style={{backgroundColor:"#f78181"}}>
                                     <span>Expenses</span> 
                                     { expense_salary_tracker['total_expenses']>0?(
                                         <span>{expense_salary_tracker['total_expenses'].toLocaleString()}</span>
                                     ):(<></>) }
                                 </div>
-                                <div className='display_headers' style={{backgroundColor:"green"}}>
+                                <div className='display_headers' style={{backgroundColor:"#8fed8f"}}>
                                     <span>Savings</span>
                                     { expense_salary_tracker['savings']>0?(
                                         <span>{expense_salary_tracker['savings'].toLocaleString()}</span>
                                     ):(<></>) }
                                 </div>
                             </div>
-                        <Chart
-                            options={chart_options}
-                            series={series_data}
-                            type="bar"
-                            width="1050"
-                        />
+                            <div className='wrapper'>
+                                <div className='chart'>
+                                <Chart
+                                    options={chart_options}
+                                    series={series_data}
+                                    type="bar"
+                                    height="100%"
+                                />
+                                </div>
+                            </div>
                         <Button variant="contained" style={{ marginBottom: "15px" }}
                             onClick={() => {
                                 setisOpen(true)
